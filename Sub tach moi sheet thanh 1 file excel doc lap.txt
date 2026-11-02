@@ -1,0 +1,46 @@
+Sub TachSheetThanhFileRieng()
+    ' True  = chuyển công thức thành giá trị (tránh lỗi link về file gốc)
+    ' False = giữ nguyên công thức
+    Const CHI_LAY_GIA_TRI As Boolean = True
+    
+    Dim ws As Worksheet, wbNew As Workbook
+    Dim folderPath As String, soFile As Long
+    
+    If ThisWorkbook.Path = "" Then
+        MsgBox "Hãy lưu file này trước rồi chạy lại macro.", vbExclamation
+        Exit Sub
+    End If
+    folderPath = ThisWorkbook.Path & "\"
+    
+    On Error GoTo Loi
+    Application.ScreenUpdating = False
+    Application.DisplayAlerts = False
+    
+    For Each ws In ThisWorkbook.Worksheets
+        If ws.Visible = xlSheetVisible Then
+            ws.Copy                      ' tự tạo workbook mới chứa sheet này
+            Set wbNew = ActiveWorkbook
+            
+            If CHI_LAY_GIA_TRI Then
+                With wbNew.Sheets(1).UsedRange
+                    .Value = .Value
+                End With
+            End If
+            
+            wbNew.SaveAs Filename:=folderPath & ws.Name & ".xlsx", _
+                         FileFormat:=xlOpenXMLWorkbook
+            wbNew.Close SaveChanges:=False
+            soFile = soFile + 1
+        End If
+    Next ws
+    
+Thoat:
+    Application.DisplayAlerts = True
+    Application.ScreenUpdating = True
+    If soFile > 0 Then MsgBox "Đã tách " & soFile & " file vào:" & vbCrLf & folderPath, vbInformation
+    Exit Sub
+    
+Loi:
+    MsgBox "Lỗi: " & Err.Description, vbCritical
+    Resume Thoat
+End Sub
